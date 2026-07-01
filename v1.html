@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MYZOO IG Reels 數據月報</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+    theme: {
+        extend: {
+            colors: {
+                bg: "#d7d4d1",
+                card: "#efeae6",
+                border: "#c2beb9",
+                text: "#333333",
+                sub: "#314022",
+                primary: "#314022"
+            },
+            boxShadow:{
+                glow:"0 0 20px rgba(49,64,34,.15)"
+            }
+        }
+    }
+}
+</script>
+<style>
+::-webkit-scrollbar{
+    width:10px;
+    height:10px;
+}
+::-webkit-scrollbar-thumb{
+    background:#c2beb9;
+    border-radius:20px;
+}
+::-webkit-scrollbar-thumb:hover{
+    background:#314022;
+}
+body{
+    background:#d7d4d1;
+    color:#333333;
+    font-family:
+    Inter,
+    "Noto Sans TC",
+    sans-serif;
+}
+.card{
+    background:#efeae6;
+    border:1px solid #c2beb9;
+    border-radius:16px;
+    padding:20px;
+}
+.kpi-card{
+    background:#efeae6;
+    border:1px solid #c2beb9;
+    border-radius:18px;
+    padding:18px;
+    transition:.25s;
+}
+.kpi-card:hover{
+    transform:translateY(-2px);
+    box-shadow:0 0 20px rgba(49,64,34,.15);
+}
+.table-row{
+    transition: background 0.2s;
+}
+.table-row:hover{
+    background:rgba(49,64,34,.05);
+}
+.badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:4px 10px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:600;
+    text-align:center;
+}
+.badge-sub {
+    background:#314022;
+    color:#ffffff;
+}
+
+.text-growth-up { color: #16a34a !important; }
+.text-growth-down { color: #dc2626 !important; }
+.text-growth-flat { color: #6b7280 !important; }
+
+.loader{
+    width:18px;
+    height:18px;
+    border-radius:50%;
+    border:2px solid #c2beb9;
+    border-top-color:#314022;
+    animation:spin .8s linear infinite;
+}
+@keyframes spin{
+from{
+transform:rotate(0deg);
+}
+to{
+transform:rotate(360deg);
+}
+}
+.sort-icon {
+    display: inline-block;
+    width: 1em;
+    text-align: center;
+    margin-left: 2px;
+    color: #314022;
+}
+select {
+    outline: none;
+    text-align: center;
+    text-align-last: center;
+}
+</style>
+</head>
+<body>
+<div class="max-w-7xl mx-auto px-6 py-8">
+<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+<div>
+<h1 class="text-4xl font-bold text-text">
+MYZOO IG Reels 數據月報
+</h1>
+<p class="text-sub font-medium mt-2">
+Instagram Reels Analytics Dashboard
+</p>
+</div>
+<div class="flex items-center gap-3">
+<select
+id="monthSelect"
+class="bg-primary hover:opacity-90 text-white px-5 py-2 rounded-xl font-semibold cursor-pointer transition-opacity border-none shadow-sm appearance-none flex items-center justify-center">
+</select>
+<button
+id="reloadBtn"
+class="bg-primary hover:opacity-90 px-5 py-2 rounded-xl font-semibold text-white transition-opacity shadow-sm flex items-center justify-center">
+重新整理
+</button>
+<div
+id="loading"
+class="hidden items-center gap-2">
+<div class="loader"></div>
+<span class="text-sm text-sub font-medium">
+Loading
+</span>
+</div>
+</div>
+</div>
+
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-5 mt-8">
+<div class="kpi-card">
+<div class="text-sub font-semibold text-sm">影片數</div>
+<div id="kpiVideos" class="text-3xl font-bold mt-2">-</div>
+</div>
+<div class="kpi-card">
+<div class="text-sub font-semibold text-sm">總觀看</div>
+<div class="flex items-baseline gap-2 mt-2">
+    <div id="kpiViews" class="text-3xl font-bold">-</div>
+    <div id="kpiViewsGrowth" class="text-sm font-bold"></div>
+</div>
+</div>
+<div class="kpi-card">
+<div class="text-sub font-semibold text-sm">平均觀看</div>
+<div class="flex items-baseline gap-2 mt-2">
+    <div id="kpiAvgViews" class="text-3xl font-bold">-</div>
+    <div id="kpiAvgViewsGrowth" class="text-sm font-bold"></div>
+</div>
+</div>
+<div class="kpi-card">
+<div class="text-sub font-semibold text-sm">平均互動率</div>
+<div class="flex items-baseline gap-2 mt-2">
+    <div id="kpiEngagement" class="text-3xl font-bold">-</div>
+    <div id="kpiEngagementGrowth" class="text-sm font-bold"></div>
+</div>
+</div>
+</div>
+
+<div class="grid lg:grid-cols-2 gap-6 mt-8">
+    <div class="card">
+        <div class="flex justify-between items-center">
+            <h2 class="text-xl font-bold text-text">📊 數據總覽</h2>
+            <span class="badge badge-sub">Data</span>
+        </div>
+        <div id="aiReport" class="mt-5 whitespace-pre-line leading-8 text-text">
+            等待資料...
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="flex justify-between items-center">
+            <h2 class="font-bold text-xl text-text">📂 Reels 定位</h2>
+            <span class="badge badge-sub">Class</span>
+        </div>
+        <div id="classSummary" class="space-y-3 mt-5"></div>
+    </div>
+</div>
+
+<div class="grid lg:grid-cols-2 gap-6 mt-8">
+    <div class="card">
+        <div class="flex justify-between items-center">
+            <h2 class="text-xl font-bold text-text">📤 分享率排行</h2>
+            <span class="badge badge-sub">Share Rate</span>
+        </div>
+        <div class="overflow-x-auto mt-5">
+            <table class="w-full text-sm">
+                <thead>
+                <tr class="text-sub border-b border-border">
+                    <th class="text-left py-3 font-semibold">#</th>
+                    <th class="text-left py-3 font-semibold">影片</th>
+                    <th class="text-right py-3 font-semibold">分享率</th>
+                </tr>
+                </thead>
+                <tbody id="shareRanking"></tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card">
+        <div class="flex justify-between items-center">
+            <h2 class="text-xl font-bold text-text">⭐ 收藏率排行</h2>
+            <span class="badge badge-sub">Save Rate</span>
+        </div>
+        <div class="overflow-x-auto mt-5">
+            <table class="w-full text-sm">
+                <thead>
+                <tr class="text-sub border-b border-border">
+                    <th class="text-left py-3 font-semibold">#</th>
+                    <th class="text-left py-3 font-semibold">影片</th>
+                    <th class="text-right py-3 font-semibold">收藏率</th>
+                </tr>
+                </thead>
+                <tbody id="saveRanking"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-8">
+    <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
+        <div>
+            <h2 class="text-2xl font-bold text-text">📚 Reels 詳細數據</h2>
+        </div>
+        <div class="flex gap-3 flex-wrap">
+            <input id="searchInput" type="text" placeholder="搜尋影片名稱..." class="bg-card border border-border text-text placeholder-gray-400 rounded-xl px-4 py-2 w-64 outline-none focus:border-primary">
+            <select id="classFilter" class="bg-primary hover:opacity-90 text-white px-5 py-2 rounded-xl font-semibold cursor-pointer transition-opacity border-none shadow-sm appearance-none flex items-center justify-center">
+                <option value="" class="bg-card text-text">全部分類</option>
+            </select>
+        </div>
+    </div>
+    <div class="overflow-x-auto mt-6">
+        <table class="min-w-full text-sm">
+            <thead>
+            <tr class="border-b border-border text-sub select-none font-semibold">
+                <th class="text-center py-3 px-4 cursor-pointer hover:text-black" onclick="setSort('date')">日期<span id="sort-icon-date" class="sort-icon"></span></th>
+                <th class="text-center py-3 px-4 cursor-pointer hover:text-black" onclick="setSort('name')">名稱<span id="sort-icon-name" class="sort-icon"></span></th>
+                <th class="text-center py-3 px-4 cursor-pointer hover:text-black" onclick="setSort('class')">分類<span id="sort-icon-class" class="sort-icon"></span></th>
+                <th class="text-center py-3 px-4 cursor-pointer hover:text-black" onclick="setSort('views')">觀看<span id="sort-icon-views" class="sort-icon"></span></th>
+                <th class="text-center py-3 px-4 cursor-pointer hover:text-black" onclick="setSort('likes')">按讚<span id="sort-icon-likes" class="sort-icon"></span></th>
+                <th class="text-center py-3 px-4 cursor-pointer hover:text-black" onclick="setSort('comments')">留言<span id="sort-icon-comments" class="sort-icon"></span></th>
+                <th class="text-center py-3 px-4 cursor-pointer hover:text-black" onclick="setSort('shares')">分享<span id="sort-icon-shares" class="sort-icon"></span></th>
+                <th class="text-center py-3 px-4 cursor-pointer hover:text-black" onclick="setSort('saves')">收藏<span id="sort-icon-saves" class="sort-icon"></span></th>
+                <th class="text-center py-3 px-4 cursor-pointer hover:text-black" onclick="setSort('shareRate')">分享率<span id="sort-icon-shareRate" class="sort-icon"></span></th>
+                <th class="text-center py-3 px-4 cursor-pointer hover:text-black" onclick="setSort('saveRate')">收藏率<span id="sort-icon-saveRate" class="sort-icon"></span></th>
+                <th class="text-center py-3 px-4">連結</th>
+            </tr>
+            </thead>
+            <tbody id="libraryTable"></tbody>
+        </table>
+    </div>
+</div>
+</div>
+<script>
+const SHEET_API = "https://opensheet.elk.sh/1PtHf66XnRzht7aauuDCWWcfJWa1z1ESASfRO8x6qvBw/ig_stats_web";
+let rawData = [];
+let filteredData = [];
+const monthSelect = document.getElementById("monthSelect");
+const classFilter = document.getElementById("classFilter");
+const searchInput = document.getElementById("searchInput");
+const loading = document.getElementById("loading");
+
+let currentSort = 'date';
+let isAscending = false;
+
+function numberFormat(v){
+    return Number(v || 0).toLocaleString("zh-TW");
+}
+function percent(v){
+    return (Number(v || 0) * 100).toFixed(2) + "%";
+}
+function safeNumber(v){
+    if(v===undefined || v===null || v==="") return 0;
+    return Number(String(v).replace(/,/g,"")) || 0;
+}
+
+function getPrevMonthStr(monthStr) {
+    if (!monthStr) return null;
+    let [y, m] = monthStr.split("-").map(Number);
+    m -= 1;
+    if (m === 0) {
+        m = 12;
+        y -= 1;
+    }
+    return `${y}-${String(m).padStart(2, '0')}`;
+}
+
+function getViews(row){
+    const t = safeNumber(row.true_views || row["True Views"]);
+    if(t>0) return t;
+    return safeNumber(row.Views || row.views);
+}
+function getLikes(row){ return safeNumber(row.Likes || row.likes || row.Like || row.like); }
+function getComments(row){ return safeNumber(row.Comments || row.comments || row.Comment || row.comment); }
+function getShares(row){ return safeNumber(row.Shares || row.shares || row.Share || row.share); }
+function getSaves(row){ 
+    return safeNumber(row.Saved || row.saved || row.Saves || row.saves || row.Save || row.save || row["收藏"] || row["收藏數"]); 
+}
+
+function getTitle(row){
+    if(row.name && row.name.trim()!==""){
+        return row.name.trim();
+    }
+    return getDate(row) || "-";
+}
+
+function getDate(row){
+    return row["Creation Date"] || row.creation_date || row.Date || row.date || "";
+}
+
+function formatShortDate(dateStr) {
+    if (!dateStr) return "-";
+    let d = dateStr.split("T")[0].split(" ")[0]; 
+    let parts = d.includes("-") ? d.split("-") : d.split("/");
+    if (parts.length >= 3) {
+        return `${parts[0]}/${parts[1]}/${parts[2]}`; 
+    }
+    return d;
+}
+
+function getMonth(row){
+    const d = getDate(row);
+    if(!d) return "";
+    return d.substring(0,7);
+}
+
+async function loadData(){
+    loading.classList.remove("hidden");
+    loading.classList.add("flex");
+    try {
+        const res = await fetch(SHEET_API);
+        rawData = await res.json();
+        rawData = rawData.filter(r=>{
+            const type = String(r["Media Type"] || r.media_type || "").toUpperCase();
+            return type==="VIDEO";
+        });
+        initMonthSelector();
+        updateDashboard();
+    } catch (e) {
+        console.error("載入資料失敗:", e);
+    } finally {
+        loading.classList.remove("flex");
+        loading.classList.add("hidden");
+    }
+}
+
+function initMonthSelector(){
+    const months = [...new Set(rawData.map(getMonth).filter(Boolean))].sort().reverse();
+    monthSelect.innerHTML = "";
+    const all = document.createElement("option");
+    all.value = "";
+    all.textContent = "全部月份";
+    all.className = "bg-card text-text";
+    monthSelect.appendChild(all);
+    months.forEach(month=>{
+        const option = document.createElement("option");
+        option.value = month;
+        option.textContent = month;
+        option.className = "bg-card text-text";
+        monthSelect.appendChild(option);
+    });
+}
+
+function updateDashboard(){
+    filteredData = rawData.filter(row=>{
+        return !monthSelect.value || getMonth(row)===monthSelect.value;
+    });
+    renderKPIs();
+    renderClassSummary();
+    renderShareRanking();
+    renderSaveRanking();
+    renderAIReport();
+    renderClassFilter();
+    renderLibrary();
+}
+
+function renderKPIs(){
+    const totalViews = filteredData.reduce((sum,row)=>sum+getViews(row),0);
+    const totalLikes = filteredData.reduce((sum,row)=>sum+getLikes(row),0);
+    const totalComments = filteredData.reduce((sum,row)=>sum+getComments(row),0);
+    const totalShares = filteredData.reduce((sum,row)=>sum+getShares(row),0);
+    const totalSaves = filteredData.reduce((sum,row)=>sum+getSaves(row),0);
+
+    const currentAvgViews = totalViews / Math.max(filteredData.length,1);
+    const engagement = ((totalLikes + totalComments + totalShares + totalSaves) / Math.max(totalViews,1));
+
+    document.getElementById("kpiVideos").textContent = filteredData.length;
+    document.getElementById("kpiViews").textContent = numberFormat(totalViews);
+    document.getElementById("kpiAvgViews").textContent = numberFormat(Math.round(currentAvgViews));
+    document.getElementById("kpiEngagement").textContent = percent(engagement);
+
+    const growthEls = {
+        views: document.getElementById("kpiViewsGrowth"),
+        avgViews: document.getElementById("kpiAvgViewsGrowth"),
+        engagement: document.getElementById("kpiEngagementGrowth")
+    };
+
+    Object.values(growthEls).forEach(el => { el.innerHTML = ""; el.className = "text-sm font-bold"; });
+
+    // 計算全部月份的數據，做為基準比較
+    const allTotalViews = rawData.reduce((sum,row)=>sum+getViews(row),0);
+    const allAvgViews = allTotalViews / Math.max(rawData.length, 1);
+    
+    const allTotalLikes = rawData.reduce((sum,row)=>sum+getLikes(row),0);
+    const allTotalComments = rawData.reduce((sum,row)=>sum+getComments(row),0);
+    const allTotalShares = rawData.reduce((sum,row)=>sum+getShares(row),0);
+    const allTotalSaves = rawData.reduce((sum,row)=>sum+getSaves(row),0);
+    const allEngagement = (allTotalLikes + allTotalComments + allTotalShares + allTotalSaves) / Math.max(allTotalViews, 1);
+
+    if (monthSelect.value) {
+        // 總觀看 (維持與上月相比)
+        const prevMonth = getPrevMonthStr(monthSelect.value);
+        const prevData = rawData.filter(row => getMonth(row) === prevMonth);
+
+        if (prevData.length > 0) {
+            const prevTotalViews = prevData.reduce((sum,row)=>sum+getViews(row),0);
+            if (prevTotalViews > 0) {
+                let rate = (totalViews - prevTotalViews) / prevTotalViews;
+                let roundedRate = (rate * 100).toFixed(1);
+                
+                let sign = rate > 0 ? "+" : "";
+                let colorClass = "text-growth-flat";
+                
+                if (roundedRate === "0.0" || roundedRate === "-0.0") {
+                    sign = "";
+                    roundedRate = "0.0";
+                } else if (rate > 0) {
+                    colorClass = "text-growth-up";
+                } else if (rate < 0) {
+                    colorClass = "text-growth-down";
+                }
+
+                growthEls.views.innerHTML = `${sign}${roundedRate}%`;
+                growthEls.views.className = `text-sm font-bold ${colorClass}`;
+            }
+        }
+
+        // 平均觀看 與 平均互動率 (與全部月份數據計算比例)
+        const renderRatio = (el, current, all) => {
+            if (all === 0) return;
+            let ratio = (current / all) * 100;
+            let roundedRatio = ratio.toFixed(1);
+            
+            let colorClass = "text-growth-flat"; // 等於 100% 顯示灰色
+            
+            if (ratio > 100) {
+                colorClass = "text-growth-up";   // 大於 100% 顯示綠色
+            } else if (ratio < 100) {
+                colorClass = "text-growth-down"; // 小於 100% 顯示紅色
+            }
+
+            el.innerHTML = `${roundedRatio}%`;
+            el.className = `text-sm font-bold ${colorClass}`;
+        };
+
+        renderRatio(growthEls.avgViews, currentAvgViews, allAvgViews);
+        renderRatio(growthEls.engagement, engagement, allEngagement);
+    }
+}
+
+function renderClassSummary(){
+    const container = document.getElementById("classSummary");
+    container.innerHTML = "";
+    const groups = {};
+    filteredData.forEach(row=>{
+        const cls = (row.class || row.Class || "未分類").trim();
+        if(!groups[cls]){
+            groups[cls]={count:0, views:0};
+        }
+        groups[cls].count++;
+        groups[cls].views += getViews(row);
+    });
+    Object.entries(groups)
+        .sort((a,b)=>b[1].views-a[1].views)
+        .forEach(([name,data])=>{
+            container.innerHTML += `
+                <div class="border border-border rounded-xl p-4 bg-[#efeae6]">
+                    <div class="flex justify-between items-center">
+                        <div class="font-bold text-text">${name}</div>
+                        <div class="text-sub font-semibold text-sm bg-border/30 px-2 py-1 rounded-lg">${data.count} 部</div>
+                    </div>
+                    <div class="mt-2 text-sub font-medium text-sm">${numberFormat(data.views)} Views</div>
+                </div>`;
+        });
+}
+
+function renderShareRanking(){
+    const tbody = document.getElementById("shareRanking");
+    tbody.innerHTML="";
+    [...filteredData]
+    .map(row=>{
+        const views = getViews(row);
+        return { row, rate: getShares(row) / Math.max(views,1) };
+    })
+    .sort((a,b)=>b.rate-a.rate)
+    .slice(0,10)
+    .forEach((item,index)=>{
+        tbody.innerHTML += `
+            <tr class="table-row border-b border-border text-text">
+                <td class="py-3 font-semibold">${index+1}</td>
+                <td class="font-medium">${getTitle(item.row)}</td>
+                <td class="text-right font-semibold">${percent(item.rate)}</td>
+            </tr>`;
+    });
+}
+
+function renderSaveRanking(){
+    const tbody = document.getElementById("saveRanking");
+    tbody.innerHTML="";
+    [...filteredData]
+    .map(row=>{
+        const views = getViews(row);
+        return { row, rate: getSaves(row) / Math.max(views,1) };
+    })
+    .sort((a,b)=>b.rate-a.rate)
+    .slice(0,10)
+    .forEach((item,index)=>{
+        tbody.innerHTML += `
+            <tr class="table-row border-b border-border text-text">
+                <td class="py-3 font-semibold">${index+1}</td>
+                <td class="font-medium">${getTitle(item.row)}</td>
+                <td class="text-right font-semibold">${percent(item.rate)}</td>
+            </tr>`;
+    });
+}
+
+function renderAIReport(){
+    const el = document.getElementById("aiReport");
+    if(filteredData.length===0){
+        el.innerHTML = "沒有資料";
+        return;
+    }
+    const totalViews = filteredData.reduce((sum,row)=>sum+getViews(row),0);
+    const avgViews = totalViews / filteredData.length;
+    
+    let bestVideoText = "-";
+    if(filteredData.length > 0) {
+        const bestVideo = [...filteredData].sort((a,b)=>getViews(b)-getViews(a))[0];
+        bestVideoText = getTitle(bestVideo);
+    }
+    
+    el.innerHTML = `
+🎥 共發布 <b>${filteredData.length}</b> 支影片。
+👀 累積觀看：<b>${numberFormat(totalViews)}</b>
+📈 平均觀看：<b>${numberFormat(Math.round(avgViews))}</b>
+🏆 觀看最佳影片：<b>${bestVideoText}</b>`;
+}
+
+function renderClassFilter(){
+    const current = classFilter.value;
+    const classes = [...new Set(rawData.map(r=>(r.class || r.Class || "未分類").trim()))].sort();
+    classFilter.innerHTML = `<option value="" class="bg-card text-text">全部分類</option>`;
+    classes.forEach(c=>{
+        classFilter.innerHTML += `<option value="${c}" class="bg-card text-text">${c}</option>`;
+    });
+    classFilter.value = current;
+}
+
+function setSort(column) {
+    if (currentSort === column) {
+        isAscending = !isAscending;
+    } else {
+        currentSort = column;
+        isAscending = false; 
+    }
+    renderLibrary();
+}
+
+function renderLibrary(){
+    const tbody = document.getElementById("libraryTable");
+    tbody.innerHTML="";
+    
+    document.querySelectorAll('.sort-icon').forEach(el => el.textContent = '');
+    const iconEl = document.getElementById(`sort-icon-${currentSort}`);
+    if(iconEl) {
+        iconEl.textContent = isAscending ? '↑' : '↓';
+    }
+
+    let rows = [...filteredData];
+    if(classFilter.value){
+        rows = rows.filter(r=>(r.class || r.Class || "未分類").trim() === classFilter.value);
+    }
+    const keyword = searchInput.value.trim().toLowerCase();
+    if(keyword){
+        rows = rows.filter(r=>getTitle(r).toLowerCase().includes(keyword));
+    }
+
+    rows.sort((a, b) => {
+        let valA, valB;
+        switch(currentSort) {
+            case 'date': valA = getDate(a); valB = getDate(b); break;
+            case 'name': valA = getTitle(a); valB = getTitle(b); break;
+            case 'class': valA = a.class || a.Class || ""; valB = b.class || b.Class || ""; break;
+            case 'views': valA = getViews(a); valB = getViews(b); break;
+            case 'likes': valA = getLikes(a); valB = getLikes(b); break;
+            case 'comments': valA = getComments(a); valB = getComments(b); break;
+            case 'shares': valA = getShares(a); valB = getShares(b); break;
+            case 'saves': valA = getSaves(a); valB = getSaves(b); break;
+            case 'shareRate': valA = getShares(a) / Math.max(getViews(a),1); valB = getShares(b) / Math.max(getViews(b),1); break;
+            case 'saveRate': valA = getSaves(a) / Math.max(getViews(a),1); valB = getSaves(b) / Math.max(getViews(b),1); break;
+            default: valA = getDate(a); valB = getDate(b);
+        }
+
+        if (typeof valA === 'string') {
+            return isAscending ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        } else {
+            return isAscending ? valA - valB : valB - valA;
+        }
+    });
+
+    rows.forEach(row=>{
+        const views = getViews(row);
+        const likes = getLikes(row);
+        const comments = getComments(row);
+        const shares = getShares(row);
+        const saves = getSaves(row);
+        const link = row.Permalink || row.permalink || "#"; 
+        
+        tbody.innerHTML += `
+        <tr class="table-row border-b border-border text-text">
+            <td class="py-3 px-4 text-center font-medium">${formatShortDate(getDate(row))}</td>
+            <td class="px-4 text-center font-semibold">${getTitle(row)}</td>
+            <td class="px-4 text-center"><span class="badge badge-sub">${row.class || row.Class || "未分類"}</span></td>
+            <td class="text-center px-4">${numberFormat(views)}</td>
+            <td class="text-center px-4">${numberFormat(likes)}</td>
+            <td class="text-center px-4">${numberFormat(comments)}</td>
+            <td class="text-center px-4">${numberFormat(shares)}</td>
+            <td class="text-center px-4">${numberFormat(saves)}</td>
+            <td class="text-center px-4 font-medium">${percent(shares/Math.max(views,1))}</td>
+            <td class="text-center px-4 font-medium">${percent(saves/Math.max(views,1))}</td>
+            <td class="text-center px-4">
+                <a href="${link}" target="_blank" class="bg-sub hover:opacity-80 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-all inline-flex items-center justify-center">
+                    Reels連結
+                </a>
+            </td>
+        </tr>`;
+    });
+}
+
+monthSelect.addEventListener("change", updateDashboard);
+classFilter.addEventListener("change", renderLibrary);
+searchInput.addEventListener("input", renderLibrary);
+document.getElementById("reloadBtn").addEventListener("click", loadData);
+window.addEventListener("load", loadData);
+</script>
+</body>
+</html>
